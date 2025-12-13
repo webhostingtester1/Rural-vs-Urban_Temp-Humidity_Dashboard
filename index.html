@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Rural vs Urban Environment Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  color:white;
+  padding:20px;
+}
+h1{text-align:center;margin-bottom:20px;}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:20px;
+}
+.card{
+  background:rgba(255,255,255,0.12);
+  backdrop-filter:blur(10px);
+  border-radius:16px;
+  padding:20px;
+  box-shadow:0 8px 20px rgba(0,0,0,0.3);
+}
+canvas{background:rgba(0,0,0,0.2);border-radius:12px;}
+</style>
+</head>
+
+<body>
+
+<h1>🌍 Rural vs Urban Environment Dashboard</h1>
+
+<div class="grid">
+  <div class="card"><canvas id="tempChart"></canvas></div>
+ 
+  <div class="card"><canvas id="humChart"></canvas></div>
+</div>
+
+<script>
+const DATA_URL = "https://script.google.com/macros/s/AKfycbyJnyIqeha3gcOw63sYoZVthoOnXXWnITMdMmj_3Zf48SJlp4Mg7rfQusZzC6ZOKsu4/exec";
+
+let tempChart, humChart;
+
+async function loadData(){
+  // Fetch Rural data
+  const ruralRes  = await fetch(DATA_URL + "?location=rural");
+  const ruralData = await ruralRes.json();
+
+  // Fetch Urban data
+  const urbanRes  = await fetch(DATA_URL + "?location=urban");
+  const urbanData = await urbanRes.json();
+
+  // Remove headers
+  ruralData.shift();
+  urbanData.shift();
+
+  let labels = [];
+  let ruralT = [], ruralH = [];
+  let urbanT = [], urbanH = [];
+
+  // Assume time is in column 1, temp 3, hum 4 (your current layout)
+  ruralData.forEach(row => {
+    const time = row[1];
+    const temp = row[3];
+    const hum  = row[4];
+
+    labels.push(time);
+    ruralT.push(temp);
+    ruralH.push(hum);
+    urbanT.push(null);  // to keep same length
+    urbanH.push(null);
+  });
+
+  urbanData.forEach(row => {
+    const time = row[1];
+    const temp = row[3];
+    const hum  = row[4];
+
+    labels.push(time);
+    urbanT.push(temp);
+    urbanH.push(hum);
+    ruralT.push(null);
+    ruralH.push(null);
+  });
+
+  updateCharts(labels, ruralT, urbanT, ruralH, urbanH);
+}
+
+function createCharts(){
+  tempChart = new Chart(document.getElementById("tempChart"),{
+    type:"line",
+    data:{
+      labels:[],
+      datasets:[
+        {label:"Rural Temperature (°C)",data:[],borderColor:"#1eff72",spanGaps:true},
+        {label:"Urban Temperature (°C)",data:[],borderColor:"#ff4b4b",spanGaps:true}
+      ]
+    },
+    options:{responsive:true}
+  });
+
+  humChart = new Chart(document.getElementById("humChart"),{
+    type:"line",
+    data:{
+      labels:[],
+      datasets:[
+        {label:"Rural Humidity (%)",data:[],borderColor:"#00e5ff",spanGaps:true},
+        {label:"Urban Humidity (%)",data:[],borderColor:"#ffd700",spanGaps:true}
+      ]
+    },
+    options:{responsive:true}
+  });
+}
+
+function updateCharts(labels,rT,uT,rH,uH){
+  tempChart.data.labels = labels;
+  tempChart.data.datasets[0].data = rT;
+  tempChart.data.datasets[1].data = uT;
+  tempChart.update();
+
+  humChart.data.labels = labels;
+  humChart.data.datasets[0].data = rH;
+  humChart.data.datasets[1].data = uH;
+  humChart.update();
+}
+
+createCharts();
+loadData();
+setInterval(loadData,15000); // refresh every 15 sec
+</script>
+
+</body>
+</html>
