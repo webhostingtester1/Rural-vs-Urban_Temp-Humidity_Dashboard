@@ -3,30 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <title>Rural vs Urban Environment Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- mobile scaling -->
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{
-  margin:0;
-  font-family:Arial, sans-serif;
-  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-  color:white;
-  padding:20px;
-}
-h1{text-align:center;margin-bottom:20px;}
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
-  gap:20px;
-}
-.card{
-  background:rgba(255,255,255,0.12);
-  backdrop-filter:blur(10px);
-  border-radius:16px;
-  padding:20px;
-  box-shadow:0 8px 20px rgba(0,0,0,0.3);
-}
-canvas{background:rgba(0,0,0,0.2);border-radius:12px;}
+  *{
+    box-sizing:border-box;
+  }
+  body{
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+    color:white;
+    padding:12px;
+  }
+  h1{
+    text-align:center;
+    margin:10px 0 16px;
+    font-size:clamp(18px,4vw,26px);
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:12px;
+  }
+  /* On wider screens show 2 columns */
+  @media (min-width:768px){
+    body{padding:20px;}
+    .grid{
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:20px;
+    }
+  }
+  .card{
+    background:rgba(255,255,255,0.12);
+    backdrop-filter:blur(10px);
+    border-radius:16px;
+    padding:12px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.3);
+  }
+  .chart-container{
+    position:relative;
+    width:100%;
+    height:260px;          /* fixed height for mobile readability */
+  }
+  @media (min-width:768px){
+    .chart-container{
+      height:340px;
+    }
+  }
+  canvas{
+    background:rgba(0,0,0,0.2);
+    border-radius:12px;
+  }
 </style>
 </head>
 
@@ -35,9 +65,17 @@ canvas{background:rgba(0,0,0,0.2);border-radius:12px;}
 <h1>🌍 Rural vs Urban Environment Dashboard</h1>
 
 <div class="grid">
-  <div class="card"><canvas id="tempChart"></canvas></div>
- 
-  <div class="card"><canvas id="humChart"></canvas></div>
+  <div class="card">
+    <div class="chart-container">
+      <canvas id="tempChart"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="chart-container">
+      <canvas id="humChart"></canvas>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -46,15 +84,12 @@ const DATA_URL = "https://script.google.com/macros/s/AKfycbyJnyIqeha3gcOw63sYoZV
 let tempChart, humChart;
 
 async function loadData(){
-  // Fetch Rural data
   const ruralRes  = await fetch(DATA_URL + "?location=rural");
   const ruralData = await ruralRes.json();
 
-  // Fetch Urban data
   const urbanRes  = await fetch(DATA_URL + "?location=urban");
   const urbanData = await urbanRes.json();
 
-  // Remove headers
   ruralData.shift();
   urbanData.shift();
 
@@ -62,7 +97,6 @@ async function loadData(){
   let ruralT = [], ruralH = [];
   let urbanT = [], urbanH = [];
 
-  // Assume time is in column 1, temp 3, hum 4 (your current layout)
   ruralData.forEach(row => {
     const time = row[1];
     const temp = row[3];
@@ -71,7 +105,7 @@ async function loadData(){
     labels.push(time);
     ruralT.push(temp);
     ruralH.push(hum);
-    urbanT.push(null);  // to keep same length
+    urbanT.push(null);
     urbanH.push(null);
   });
 
@@ -100,7 +134,16 @@ function createCharts(){
         {label:"Urban Temperature (°C)",data:[],borderColor:"#ff4b4b",spanGaps:true}
       ]
     },
-    options:{responsive:true}
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,   // important for mobile
+      scales:{
+        x:{ticks:{maxTicksLimit:5}}
+      },
+      plugins:{
+        legend:{labels:{boxWidth:10,font:{size:11}}}
+      }
+    }
   });
 
   humChart = new Chart(document.getElementById("humChart"),{
@@ -112,7 +155,16 @@ function createCharts(){
         {label:"Urban Humidity (%)",data:[],borderColor:"#ffd700",spanGaps:true}
       ]
     },
-    options:{responsive:true}
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      scales:{
+        x:{ticks:{maxTicksLimit:5}}
+      },
+      plugins:{
+        legend:{labels:{boxWidth:10,font:{size:11}}}
+      }
+    }
   });
 }
 
@@ -130,7 +182,7 @@ function updateCharts(labels,rT,uT,rH,uH){
 
 createCharts();
 loadData();
-setInterval(loadData,15000); // refresh every 15 sec
+setInterval(loadData,15000);
 </script>
 
 </body>
