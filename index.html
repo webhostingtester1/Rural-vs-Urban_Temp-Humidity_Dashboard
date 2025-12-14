@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Rural vs Urban Environment Dashboard</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- mobile scaling -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -28,7 +28,6 @@
     grid-template-columns:1fr;
     gap:12px;
   }
-  /* On wider screens show 2 columns */
   @media (min-width:768px){
     body{padding:20px;}
     .grid{
@@ -46,7 +45,7 @@
   .chart-container{
     position:relative;
     width:100%;
-    height:260px;          /* fixed height for mobile readability */
+    height:260px;
   }
   @media (min-width:768px){
     .chart-container{
@@ -83,6 +82,20 @@ const DATA_URL = "https://script.google.com/macros/s/AKfycbyJnyIqeha3gcOw63sYoZV
 
 let tempChart, humChart;
 
+// Format ISO-like datetime string from Sheets to "dd/mm hh:mm"
+function formatLabel(raw){
+  const d = new Date(raw);
+  const datePart = d.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: '2-digit'
+  });
+  const timePart = d.toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+  return `${datePart} ${timePart}`; // e.g. "14/12 22:11"
+}
+
 async function loadData(){
   const ruralRes  = await fetch(DATA_URL + "?location=rural");
   const ruralData = await ruralRes.json();
@@ -102,7 +115,7 @@ async function loadData(){
     const temp = row[3];
     const hum  = row[4];
 
-    labels.push(time);
+    labels.push(formatLabel(time));
     ruralT.push(temp);
     ruralH.push(hum);
     urbanT.push(null);
@@ -114,7 +127,7 @@ async function loadData(){
     const temp = row[3];
     const hum  = row[4];
 
-    labels.push(time);
+    labels.push(formatLabel(time));
     urbanT.push(temp);
     urbanH.push(hum);
     ruralT.push(null);
@@ -136,7 +149,7 @@ function createCharts(){
     },
     options:{
       responsive:true,
-      maintainAspectRatio:false,   // important for mobile
+      maintainAspectRatio:false,
       scales:{
         x:{ticks:{maxTicksLimit:5}}
       },
