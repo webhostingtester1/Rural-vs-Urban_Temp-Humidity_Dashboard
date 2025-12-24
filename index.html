@@ -95,7 +95,7 @@ function formatLabel(raw){
   });
   return `${datePart} ${timePart}`; // e.g. "14/12 22:11"
 }
-
+/*
 async function loadData(){
   const ruralRes  = await fetch(DATA_URL + "?location=rural");
   const ruralData = await ruralRes.json();
@@ -135,6 +135,57 @@ async function loadData(){
   });
 
   updateCharts(labels, ruralT, urbanT, ruralH, urbanH);
+}
+*/
+async function loadData(){
+  const ruralRes  = await fetch(DATA_URL + "?location=rural");
+  const ruralData = await ruralRes.json();
+
+  const urbanRes  = await fetch(DATA_URL + "?location=urban");
+  const urbanData = await urbanRes.json();
+
+  ruralData.shift();
+  urbanData.shift();
+
+  // Create maps using time as key
+  const ruralMap = {};
+  const urbanMap = {};
+
+  ruralData.forEach(row => {
+    const time = formatLabel(row[1]);
+    ruralMap[time] = {
+      temp: row[3],
+      hum:  row[4]
+    };
+  });
+
+  urbanData.forEach(row => {
+    const time = formatLabel(row[1]);
+    urbanMap[time] = {
+      temp: row[3],
+      hum:  row[4]
+    };
+  });
+
+  // Union of all timestamps
+  const labels = [...new Set([
+    ...Object.keys(ruralMap),
+    ...Object.keys(urbanMap)
+  ])].sort();
+
+  let ruralT = [], urbanT = [];
+  let ruralH = [], urbanH = [];
+
+  labels.forEach(time => {
+    ruralT.push(ruralMap[time]?.temp ?? null);
+    ruralH.push(ruralMap[time]?.hum  ?? null);
+    urbanT.push(urbanMap[time]?.temp ?? null);
+    urbanH.push(urbanMap[time]?.hum  ?? null);
+  });
+
+  
+
+ updateCharts(labels, ruralT, urbanT, ruralH, urbanH);
 }
 
 function createCharts(){
@@ -195,7 +246,7 @@ function updateCharts(labels,rT,uT,rH,uH){
 
 createCharts();
 loadData();
-setInterval(loadData,15000);
+setInterval(loadData,100000);
 </script>
 
 </body>
